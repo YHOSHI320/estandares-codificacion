@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Archivo Digital - Documentos por QR</title>
+  <meta name="description" content="Guardá y compartí documentos escaneados por carpetas. Todo accesible desde el celular con un código QR.">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📁</text></svg>">
+</head>
+<body>
+
+  <!-- ===== PANTALLA: FALTA CONFIGURACIÓN ===== -->
+  <section id="configScreen" class="screen hidden">
+    <div class="center-box">
+      <div class="logo"><span class="logo-icon">📁</span> Archivo Digital</div>
+      <h1>Configuración pendiente</h1>
+      <p>Para que la web funcione hay que conectar Firebase (es gratis). Abrí el archivo <code>js/config.js</code> y pegá la configuración de tu proyecto. Revisá la guía <b>CONFIGURAR.md</b> para los pasos exactos.</p>
+      <button class="btn btn-primary" onclick="location.reload()">Ya lo configuré — Recargar</button>
+    </div>
+  </section>
+
+  <!-- ===== PANTALLA: PIN OPCIONAL ===== -->
+  <section id="pinScreen" class="screen hidden">
+    <div class="center-box">
+      <div class="logo"><span class="logo-icon">📁</span> Archivo Digital</div>
+      <h1>Acceso protegido</h1>
+      <p>Esta institución protege sus documentos con un PIN.</p>
+      <div class="pin-wrap">
+        <input type="password" id="pinInput" inputmode="numeric" maxlength="6" placeholder="Ingresá el PIN" class="input input-lg">
+        <button class="btn btn-primary btn-lg" id="pinBtn">Ingresar</button>
+      </div>
+      <p class="err-msg hidden" id="pinError">PIN incorrecto.</p>
+    </div>
+  </section>
+
+  <!-- ===== PANTALLA: CARGANDO ===== -->
+  <section id="loadingScreen" class="screen">
+    <div class="center-box">
+      <div class="logo"><span class="logo-icon">📁</span> Archivo Digital</div>
+      <div class="spinner"></div>
+      <p class="muted">Cargando documentos...</p>
+    </div>
+  </section>
+
+  <!-- ===== APP ===== -->
+  <div id="app" class="screen hidden">
+    <header class="topbar">
+      <div class="topbar-inner container">
+        <div class="brand"><span class="logo-icon">📁</span> Archivo Digital</div>
+        <div class="top-actions">
+          <input type="search" id="searchInput" class="input search" placeholder="Buscar documento..." aria-label="Buscar documento">
+          <button class="btn btn-outline" id="newFolderBtn" title="Crear carpeta">+ Carpeta</button>
+          <button class="btn btn-primary" id="uploadBtn">📷 Subir / Escanear</button>
+        </div>
+      </div>
+    </header>
+
+    <main class="container">
+      <nav class="breadcrumb" id="breadcrumb" aria-label="Ruta"></nav>
+
+      <!-- Carpeta vacía -->
+      <div id="folderSection">
+        <div class="section-title">
+          <h2 id="folderTitle">Carpetas</h2>
+          <span class="muted" id="folderCount"></span>
+        </div>
+        <div class="grid" id="folderGrid"></div>
+      </div>
+
+      <!-- Documentos dentro de una carpeta -->
+      <section id="docsSection" class="hidden">
+        <div class="section-title">
+          <h2 id="docsTitle">Documentos</h2>
+          <span class="muted" id="docCount"></span>
+        </div>
+        <div class="doc-list" id="docList"></div>
+        <p class="empty hidden" id="emptyDocs">Carpeta vacía. Tocá "Subir / Escanear" para guardar el primer documento.</p>
+      </section>
+    </main>
+  </div>
+
+  <!-- ===== MODAL: SUBIR / ESCANEAR ===== -->
+  <div class="modal-overlay hidden" id="uploadModal">
+    <div class="modal">
+      <button class="modal-close" data-close="uploadModal" aria-label="Cerrar">&times;</button>
+      <h3>Subir / Escanear documento</h3>
+      <label class="upload-drop" id="dropZone">
+        <input type="file" id="fileInput" accept="application/pdf,image/*" capture="environment">
+        <span class="drop-text">Tocá para elegir un PDF, foto o escanear con la cámara</span>
+        <small class="muted">En el celular se abre la cámara automáticamente</small>
+      </label>
+      <div id="previewBox" class="preview hidden"></div>
+      <div class="form-row">
+        <label for="uploadFolder">Guardar en la carpeta</label>
+        <select id="uploadFolder" class="input"></select>
+      </div>
+      <div class="form-row">
+        <label for="uploadName">Nombre del documento</label>
+        <input type="text" id="uploadName" class="input" placeholder="Ej: Informe 2026 - Página 1">
+      </div>
+      <div class="progress hidden" id="uploadProgress">
+        <div class="bar" id="progressBar"></div>
+        <span class="muted" id="progressText">0%</span>
+      </div>
+      <p class="err-msg hidden" id="uploadError"></p>
+      <button class="btn btn-primary btn-block" id="saveUploadBtn">Guardar documento</button>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: NUEVA CARPETA ===== -->
+  <div class="modal-overlay hidden" id="newFolderModal">
+    <div class="modal">
+      <button class="modal-close" data-close="newFolderModal" aria-label="Cerrar">&times;</button>
+      <h3>Nueva carpeta</h3>
+      <label for="folderNameInput">Nombre de la carpeta</label>
+      <input type="text" id="folderNameInput" class="input" placeholder="Ej: ACTA, CONVENIO...">
+      <p class="err-msg hidden" id="folderError"></p>
+      <button class="btn btn-primary btn-block" id="createFolderBtn">Crear carpeta</button>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: RENOMBRAR CARPETA ===== -->
+  <div class="modal-overlay hidden" id="renameFolderModal">
+    <div class="modal">
+      <button class="modal-close" data-close="renameFolderModal" aria-label="Cerrar">&times;</button>
+      <h3>Renombrar carpeta</h3>
+      <input type="text" id="renameFolderInput" class="input">
+      <button class="btn btn-primary btn-block" id="renameFolderBtn">Guardar</button>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: VER DOCUMENTO ===== -->
+  <div class="modal-overlay hidden" id="viewerModal">
+    <div class="modal viewer">
+      <button class="modal-close" data-close="viewerModal" aria-label="Cerrar">&times;</button>
+      <h3 id="viewerTitle">Documento</h3>
+      <div id="viewerBody" class="viewer-body">
+        <iframe id="viewerFrame" class="hidden" title="Visor de documento"></iframe>
+        <img id="viewerImg" class="hidden" alt="Documento">
+        <p class="hidden muted" id="viewerUnsupported">Este tipo de archivo no se puede previsualizar.</p>
+      </div>
+      <div class="viewer-actions">
+        <button class="btn btn-outline" id="openTabBtn">Abrir en pestaña nueva</button>
+        <button class="btn btn-outline" id="downloadBtn">Descargar</button>
+        <button class="btn btn-outline" id="editNotesBtn">Notas / Editar</button>
+      </div>
+      <div class="notes-box hidden" id="notesBox">
+        <label for="notesInput">Notas del documento (se guardan en la nube)</label>
+        <textarea id="notesInput" rows="3" class="input"></textarea>
+        <button class="btn btn-primary btn-block" id="saveNotesBtn">Guardar notas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== MODAL: QR ===== -->
+  <div class="modal-overlay hidden" id="qrModal">
+    <div class="modal qr">
+      <button class="modal-close" data-close="qrModal" aria-label="Cerrar">&times;</button>
+      <h3 id="qrTitle">Compartir</h3>
+      <p class="muted">Escaneá este código QR con la cámara de cualquier celular y se abrirá este elemento.</p>
+      <div id="qrBox" class="qr-box"></div>
+      <input type="text" id="qrLink" class="input" readonly onclick="this.select()">
+      <button class="btn btn-outline btn-block" id="copyBtn">Copiar enlace</button>
+    </div>
+  </div>
+
+  <div id="toastWrap"></div>
+
+  <!-- ===== LIBRERÍAS ===== -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- ===== APP ===== -->
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
