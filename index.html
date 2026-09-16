@@ -37,7 +37,13 @@ html, body { height: 100%; }
 
 body {
   font-family: var(--font);
-  background: var(--bg-grad) fixed;
+  background-color: #e8efe9;
+  background-image:
+    linear-gradient(180deg, rgba(244,248,245,.92) 0%, rgba(233,241,236,.88) 100%),
+    url('https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=80');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: var(--text);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -207,13 +213,13 @@ body {
   border-radius: 18px;
   padding: 1.05rem;
   display: flex; align-items: center; gap: .95rem;
+  min-width: 0;
   box-shadow: var(--shadow-sm);
   cursor: pointer;
-  transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+  transition: box-shadow .18s ease, border-color .18s ease;
 }
 .folder-card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-3px);
   border-color: rgba(11, 110, 79, .35);
 }
 .folder-icon {
@@ -224,10 +230,16 @@ body {
   font-weight: 800; font-size: 1.45rem;
   text-transform: uppercase;
 }
-.folder-info { flex: 1; min-width: 0; }
+.folder-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
 .folder-name {
   font-weight: 800; font-size: 1.02rem;
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  color: var(--text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+  line-height: 1.3;
 }
 .folder-actions { display: flex; gap: .3rem; flex-wrap: wrap; }
 
@@ -392,6 +404,12 @@ body {
   .doc-actions .mini-btn { flex: 1; text-align: center; }
   .section-title { margin-top: .6rem; }
   .crumb-btn, .crumb-current { font-size: .85rem; }
+
+  /* Carpetas: 1 columna para que el nombre siempre se vea completo */
+  .grid { grid-template-columns: 1fr; gap: .75rem; }
+  .folder-card { padding: .95rem 1.05rem; gap: 1rem; }
+  .folder-icon { width: 50px; height: 50px; flex: 0 0 50px; font-size: 1.3rem; border-radius: 14px; }
+  .folder-name { font-size: 1.08rem; -webkit-line-clamp: 2; }
 }
 </style>
 </head>
