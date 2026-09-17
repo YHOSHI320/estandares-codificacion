@@ -290,6 +290,33 @@ body {
 .section-title .muted { font-weight: 600; }
 
 /* ============ GRILLA DE CARPETAS ============ */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(280px, 340px) 1fr;
+  gap: 1.2rem;
+  align-items: start;
+  margin-bottom: 2rem;
+}
+.panel {
+  background: rgba(255, 255, 255, .92);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  border: 1.5px solid #d9c7f3;
+  border-radius: 20px;
+  padding: 1rem 1.1rem 1.1rem;
+  box-shadow: var(--shadow-sm);
+}
+.folder-panel { position: sticky; top: 78px; max-height: calc(100vh - 100px); overflow: auto; }
+.folder-panel .grid { display: flex; flex-direction: column; gap: .75rem; margin-bottom: 0; }
+.folder-panel .folder-card { grid-template-areas: "icon info" "actions actions"; padding: .9rem; }
+.folder-panel .folder-actions { flex-wrap: wrap; }
+.folder-card.active {
+  border-color: #8b5cf6;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, .14), 0 8px 22px rgba(139, 92, 246, .16);
+}
+.docs-panel { min-height: 60vh; }
+.docs-panel .doc-list { margin-bottom: 0; }
+
 .grid {
   display: grid; gap: 1rem;
   grid-template-columns: repeat(auto-fill, minmax(235px, 1fr));
@@ -521,6 +548,11 @@ body {
   .folder-name { font-size: 1.5rem; }
   .folder-actions { flex-wrap: wrap; }
   .folder-actions .mini-btn { padding: .5rem .4rem; }
+
+  /* Celular: paneles apilados, carpetas primero */
+  .layout { grid-template-columns: 1fr; gap: .85rem; }
+  .folder-panel { position: static; max-height: none; overflow: visible; }
+  .docs-panel { min-height: auto; }
 }
 </style>
 </head>
@@ -588,24 +620,26 @@ body {
     <main class="container">
       <nav class="breadcrumb" id="breadcrumb" aria-label="Ruta"></nav>
 
-      <!-- Carpeta vacía -->
-      <div id="folderSection">
-        <div class="section-title">
-          <h2 id="folderTitle">Carpetas</h2>
-          <span class="muted" id="folderCount"></span>
-        </div>
-        <div class="grid" id="folderGrid"></div>
-      </div>
+      <div class="layout">
+        <!-- PANEL: CARPETAS -->
+        <aside class="panel folder-panel" id="folder-panel">
+          <div class="section-title">
+            <h2 id="folderTitle">Carpetas</h2>
+            <span class="muted" id="folderCount"></span>
+          </div>
+          <div class="grid" id="folderGrid"></div>
+        </aside>
 
-      <!-- Documentos dentro de una carpeta -->
-      <section id="docsSection" class="hidden">
-        <div class="section-title">
-          <h2 id="docsTitle">Documentos</h2>
-          <span class="muted" id="docCount"></span>
-        </div>
-        <div class="doc-list" id="docList"></div>
-        <p class="empty hidden" id="emptyDocs">Carpeta vacía. Tocá "Subir / Escanear" para guardar el primer documento.</p>
-      </section>
+        <!-- PANEL: DOCUMENTOS (lo subido) -->
+        <section class="panel docs-panel" id="docsSection">
+          <div class="section-title">
+            <h2 id="docsTitle">Documentos</h2>
+            <span class="muted" id="docCount"></span>
+          </div>
+          <div class="doc-list" id="docList"></div>
+          <p class="empty hidden" id="emptyDocs">Carpeta vacía. Tocá "Subir / Escanear" para guardar el primer documento.</p>
+        </section>
+      </div>
     </main>
   </div>
 
@@ -821,7 +855,7 @@ const APP_PIN = "";
       loadingScreen: $("loadingScreen"), app: $("app"),
       pinInput: $("pinInput"), pinBtn: $("pinBtn"), pinError: $("pinError"),
       searchInput: $("searchInput"), newFolderBtn: $("newFolderBtn"), uploadBtn: $("uploadBtn"),
-      breadcrumb: $("breadcrumb"), folderSection: $("folderSection"),
+      breadcrumb: $("breadcrumb"), folderPanel: $("folder-panel"),
       folderTitle: $("folderTitle"), folderCount: $("folderCount"), folderGrid: $("folderGrid"),
       docsSection: $("docsSection"), docsTitle: $("docsTitle"), docCount: $("docCount"),
       docList: $("docList"), emptyDocs: $("emptyDocs"), toastWrap: $("toastWrap"),
@@ -978,6 +1012,7 @@ const APP_PIN = "";
 
     var card = document.createElement("div");
     card.className = "folder-card";
+    card.setAttribute("data-folder-id", folder.id);
     card.innerHTML =
       '<div class="folder-icon">' + esc(folder.name[0]) + '</div>' +
       '<div class="folder-info">' +
@@ -1000,30 +1035,43 @@ const APP_PIN = "";
   function renderDocs() {
     var folderId = state.currentFolder;
     var isRoot = !folderId;
-    els.docsSection.classList.toggle("hidden", isRoot);
-    els.folderSection.classList.toggle("hidden", !isRoot);
 
     renderBreadcrumb();
+    markFolderActive(folderId);
 
-    if (isRoot) { tryOpenPendingDoc(); return; }
-
-    var folderName = state.folders[folderId] ? state.folders[folderId].name : "";
-    els.docsTitle.textContent = folderName;
-    els.docList.innerHTML = "";
+    var folderName = folderId && state.folders[folderId] ? state.folders[folderId].name : "";
+    els.docsTitle.textContent = isRoot ? "Todos los documentos" : folderName;
 
     var q = (state.search || "").toLowerCase();
     var list = Object.keys(state.docs).map(function (id) { return state.docs[id]; })
-      .filter(function (d) { return d.folderId === folderId; })
+      .filter(function (d) { return isRoot || d.folderId === folderId; })
       .filter(function (d) { return !q || d.name.toLowerCase().indexOf(q) > -1; })
       .sort(function (a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
 
-    els.docCount.textContent = list.length + (list.length === 1 ? " documento" : " documentos");
-    els.emptyDocs.classList.toggle("hidden", list.length > 0);
+    els.docCount.textContent = list.length + (list.length === 1 ? " documento" : " documentos") + (isRoot && !q ? " · todas las carpetas" : "");
+    els.docList.innerHTML = "";
+
+    if (list.length === 0) {
+      els.emptyDocs.textContent = isRoot
+        ? 'Todavía no hay documentos subidos. Tocá "Subir / Escanear" para guardar el primero.'
+        : 'Carpeta vacía. Tocá "Subir / Escanear" para guardar el primer documento.';
+      els.emptyDocs.classList.remove("hidden");
+    } else {
+      els.emptyDocs.classList.add("hidden");
+    }
 
     list.forEach(function (d) { els.docList.appendChild(docRow(d)); });
 
     renderBreadcrumb();
     tryOpenPendingDoc();
+  }
+
+  function markFolderActive(activeId) {
+    var cards = els.folderGrid.querySelectorAll(".folder-card");
+    cards.forEach(function (c) {
+      var id = c.getAttribute("data-folder-id");
+      c.classList.toggle("active", !!activeId && id === activeId);
+    });
   }
 
   function badge(doc) {
