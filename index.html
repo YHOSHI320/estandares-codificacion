@@ -211,8 +211,14 @@ body {
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 18px;
-  padding: 1.15rem 1.1rem;
-  display: flex; align-items: flex-start; gap: 1rem;
+  padding: 1.1rem;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "icon info"
+    "actions actions";
+  gap: .5rem .8rem;
+  align-items: start;
   min-width: 0;
   box-shadow: var(--shadow-sm);
   cursor: pointer;
@@ -223,23 +229,39 @@ body {
   border-color: rgba(11, 110, 79, .35);
 }
 .folder-icon {
-  width: 54px; height: 54px; flex: 0 0 54px; border-radius: 15px;
+  grid-area: icon;
+  width: 54px; height: 54px; border-radius: 15px;
   background: linear-gradient(145deg, #e3f1ea, #d2e8dc);
   color: var(--primary);
   display: flex; align-items: center; justify-content: center;
   font-weight: 800; font-size: 1.45rem;
   text-transform: uppercase;
 }
-.folder-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .25rem; }
+.folder-info {
+  grid-area: info;
+  min-width: 0;
+  display: flex; flex-direction: column; gap: .2rem;
+}
 .folder-name {
   font-weight: 900;
-  font-size: 1.22rem;
+  font-size: 1.45rem;
   color: #0d1f16;
+  text-transform: uppercase;
+  letter-spacing: .02em;
   overflow: hidden;
   word-break: break-word;
-  line-height: 1.35;
+  line-height: 1.25;
 }
-.folder-actions { display: flex; gap: .3rem; flex-wrap: wrap; }
+.folder-actions {
+  grid-area: actions;
+  display: flex; gap: .35rem; flex-wrap: nowrap;
+}
+.folder-actions .mini-btn {
+  flex: 1;
+  justify-content: center;
+  text-align: center;
+  white-space: nowrap;
+}
 
 /* ============ LISTA DE DOCUMENTOS ============ */
 .doc-list { display: flex; flex-direction: column; gap: .75rem; margin-bottom: 2.5rem; }
@@ -405,10 +427,11 @@ body {
 
   /* Carpetas: 1 columna para que el nombre siempre se vea completo */
   .grid { grid-template-columns: 1fr; gap: .75rem; }
-  .folder-card { padding: 1rem; gap: .95rem; align-items: flex-start; }
-  .folder-icon { width: 52px; height: 52px; flex: 0 0 52px; font-size: 1.4rem; border-radius: 14px; }
-  .folder-name { font-size: 1.28rem; }
-  .folder-actions { margin-left: 0; }
+  .folder-card { padding: 1rem; }
+  .folder-icon { width: 52px; height: 52px; font-size: 1.4rem; border-radius: 14px; }
+  .folder-name { font-size: 1.5rem; }
+  .folder-actions { flex-wrap: wrap; }
+  .folder-actions .mini-btn { padding: .5rem .4rem; }
 }
 </style>
 </head>
