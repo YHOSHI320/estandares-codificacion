@@ -105,6 +105,89 @@ body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
+/* ============ PORTADA (BIENVENIDA) ============ */
+.cover {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background-image:
+    linear-gradient(155deg, rgba(236, 72, 153, .25) 0%, rgba(168, 85, 247, .45) 100%),
+    url('https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=1920&q=80');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+.cover-card {
+  text-align: center;
+  max-width: 460px;
+  width: 100%;
+  background: rgba(255, 255, 255, .93);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-radius: 28px;
+  border: 1px solid rgba(255, 255, 255, .85);
+  padding: 2.7rem 2.1rem 2.3rem;
+  box-shadow: 0 26px 70px rgba(120, 40, 140, .30);
+  animation: coverIn .7s ease both;
+}
+@keyframes coverIn {
+  from { opacity: 0; transform: translateY(24px) scale(.98); }
+  to   { opacity: 1; transform: none; }
+}
+.cover-logo {
+  width: 96px; height: 96px;
+  margin: 0 auto 1.2rem;
+  border-radius: 30px;
+  background: linear-gradient(135deg, #ec4899, #a855f7);
+  color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.7rem;
+  box-shadow: 0 16px 36px rgba(168, 85, 247, .40);
+}
+.cover-app {
+  font-size: 2.6rem;
+  font-weight: 900;
+  letter-spacing: .03em;
+  line-height: 1.1;
+  background: linear-gradient(120deg, #be185d, #7c3aed 70%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.cover-sub {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #7c3aed;
+  margin-top: .35rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+.cover-divider {
+  width: 64px; height: 4px;
+  margin: 1rem auto;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #ec4899, #a855f7);
+}
+.cover-desc { font-size: .95rem; color: #6b5278; line-height: 1.5; }
+.cover-btn {
+  margin-top: 1.7rem;
+  width: 100%;
+  background: linear-gradient(135deg, #ec4899, #8b5cf6);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: .95rem 1rem;
+  font-size: 1.1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 14px 30px rgba(168, 85, 247, .38);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.cover-btn:hover { transform: translateY(-2px); box-shadow: 0 18px 38px rgba(168, 85, 247, .45); }
+.cover-note { margin-top: 1rem; font-size: .8rem; color: #9b82a8; }
+
 /* ============ BARRA SUPERIOR ============ */
 .topbar {
   position: sticky; top: 0; z-index: 20;
@@ -437,6 +520,19 @@ body {
 </head>
 <body>
 
+  <!-- ===== PORTADA: BIENVENIDA ===== -->
+  <section id="coverScreen" class="screen cover">
+    <div class="cover-card">
+      <div class="cover-logo">📁</div>
+      <div class="cover-app">YHOSH</div>
+      <div class="cover-sub">Archivo Digital</div>
+      <div class="cover-divider"></div>
+      <p class="cover-desc">Documentos organizados y compartidos con código QR, siempre a mano.</p>
+      <button class="cover-btn" id="coverBtn">Ingresar</button>
+      <p class="cover-note">Gestión documental segura y simple</p>
+    </div>
+  </section>
+
   <!-- ===== PANTALLA: FALTA CONFIGURACIÓN ===== -->
   <section id="configScreen" class="screen hidden">
     <div class="center-box">
@@ -462,7 +558,7 @@ body {
   </section>
 
   <!-- ===== PANTALLA: CARGANDO ===== -->
-  <section id="loadingScreen" class="screen">
+  <section id="loadingScreen" class="screen hidden">
     <div class="center-box">
       <div class="logo"><span class="logo-icon">📁</span> Archivo Digital</div>
       <div class="spinner"></div>
@@ -714,6 +810,7 @@ const APP_PIN = "";
   /* ================= INICIALIZACIÓN ================= */
   function init() {
     els = {
+      coverScreen: $("coverScreen"), coverBtn: $("coverBtn"),
       configScreen: $("configScreen"), pinScreen: $("pinScreen"),
       loadingScreen: $("loadingScreen"), app: $("app"),
       pinInput: $("pinInput"), pinBtn: $("pinBtn"), pinError: $("pinError"),
@@ -738,13 +835,17 @@ const APP_PIN = "";
 
     if (!CONFIG || !CONFIG.url) { show($("configScreen")); return; }
 
+    show($("coverScreen"));
+    els.coverBtn.addEventListener("click", enterApp);
+  }
+
+  function enterApp() {
     if (PIN && sessionStorage.getItem("pin_ok") !== PIN) {
       show($("pinScreen"));
       els.pinBtn.addEventListener("click", checkPin);
       els.pinInput.addEventListener("keydown", function (e) { if (e.key === "Enter") checkPin(); });
       return;
     }
-
     boot();
   }
 
@@ -777,7 +878,7 @@ const APP_PIN = "";
   }
 
   function show(el) {
-    var screens = [els.configScreen, els.pinScreen, els.loadingScreen, els.app];
+    var screens = [els.coverScreen, els.configScreen, els.pinScreen, els.loadingScreen, els.app];
     screens.forEach(function (s) { if (s) s.classList.add("hidden"); });
     if (el) el.classList.remove("hidden");
   }
